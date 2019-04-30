@@ -1,5 +1,7 @@
 package oopProject.oopProject;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -44,9 +46,7 @@ public class server extends Application {
 				try {
 					Socket c = server.accept();
 					new Thread(new client(c)).start();
-					Platform.runLater(() -> {
-						log.appendText("Client bağlandı\n");
-					});
+					
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -57,12 +57,37 @@ public class server extends Application {
 	
 	private class client implements Runnable{
 		Socket socket;
+		DataInputStream input;
+		DataOutputStream output;
 		client(Socket s){
 			socket = s;
+			try {
+				input = new DataInputStream(socket.getInputStream());
+				output = new DataOutputStream(socket.getOutputStream());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 		}
 		@Override
 		public void run() {
-			
+			Platform.runLater(() -> {
+				log.appendText("Client connected "+socket.getInetAddress()+"\n");
+			});
+			try {
+				while(true) {
+					String msg = input.readUTF();
+					Platform.runLater(() -> {
+						log.appendText("Client("+socket.getInetAddress()+") : "+msg+"\n");
+					});
+				}
+			} catch (IOException e) {
+				Platform.runLater(() -> {
+					log.appendText("Client("+socket.getInetAddress()+") connection lost\n");
+				});
+				e.printStackTrace();
+			}
 		}
 		
 	}
