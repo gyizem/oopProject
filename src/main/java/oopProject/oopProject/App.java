@@ -26,6 +26,7 @@ public class App  extends Application {
 	private static DataInputStream input;
 	private static DataOutputStream output;
 	private static TextField msg;
+	private static TextArea log;
     public static void main( String[] args ){
         launch(args);
     }
@@ -33,7 +34,7 @@ public class App  extends Application {
 	@Override
 	public void start(Stage stage) throws Exception {
 		stage.setTitle("client");		
-		TextArea log = new TextArea();
+		log = new TextArea();
 		log.setEditable(false);
 		
 		msg = new TextField();
@@ -67,11 +68,20 @@ public class App  extends Application {
 	}
 	
 	private class sendListener implements EventHandler<ActionEvent>{
+		private String res;
 		@Override
 		public void handle(ActionEvent e) {
 			try {
 				output.writeUTF(msg.getText());
 				output.flush();
+				
+				log.setText("");
+				
+				res = input.readUTF();
+				
+				Platform.runLater(()->{
+					log.appendText(res);
+				});
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
