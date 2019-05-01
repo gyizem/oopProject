@@ -40,6 +40,7 @@ public class App  extends Application {
 		msg = new TextField();
 		Button send = new Button("send");
 		send.addEventHandler(ActionEvent.ACTION,new sendListener());
+		msg.addEventHandler(ActionEvent.ACTION,new sendListener());
 		
 		BorderPane foot = new BorderPane();
 		foot.setRight(send);

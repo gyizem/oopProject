@@ -127,16 +127,14 @@ public class server extends Application {
 									buf += c+"\\";
 								}
 						}
-						System.out.println("files"+buf);
 						if(!buf.equals("notvalid") && Files.exists(Paths.get("files"+buf), LinkOption.NOFOLLOW_LINKS)) {
 							pos = buf;
 							ls();
 						}else {
 							send = msg.substring(3, msg.length())+" is not exist! \n";
 						}
-						System.out.println("Pos : files"+pos);
 					}else {
-						output.writeUTF("Bu ne?\n");
+						send = msg+" is not valid commmand\n";
 					}
 					
 					output.writeUTF(send);
