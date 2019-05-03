@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -106,9 +107,9 @@ public class server extends Application {
 					
 					String cs[] = msg.split(" ");
 					send = "";
-					if(cs[0].equals("ls")){
+					if(cs[0].equals("ls") && cs.length == 1){
 						ls();
-					}else if(cs[0].equals("cd")){
+					}else if(cs[0].equals("cd") && cs.length == 2){
 						String buf = pos;
 						String dirs[] = cs[1].split("\\\\");
 						for(String c:dirs) {
@@ -128,13 +129,51 @@ public class server extends Application {
 								}
 						}
 						if(!buf.equals("notvalid") && Files.exists(Paths.get("files"+buf), LinkOption.NOFOLLOW_LINKS)) {
-							pos = buf;
-							ls();
+							if(Files.isDirectory(Paths.get("files"+buf))) {
+								pos = buf;
+								ls();
+							}else {
+								send = cs[1]+" is not a directory.\n";
+							}
+							
 						}else {
 							send = msg.substring(3, msg.length())+" is not exist! \n";
 						}
+					}else if(cs[0].equals("pwd") && cs.length == 1){
+						send = "You are in \""+pos+"\" \n";
+					}else if(cs[0].equals("rm") && cs.length == 2){
+						Path rmD = Paths.get("files\\"+pos+cs[1]);
+						if(!Files.exists(rmD)){
+							send = "\""+cs[1]+"\" is not exists.\n";
+						}else {
+							try {
+								Files.delete(rmD);
+								send = "\""+cs[1]+"\" removed.\n";
+							}catch(DirectoryNotEmptyException e) {
+								send = "Removing failed, directory is not empty";
+							}catch(Exception e) {
+								e.printStackTrace();
+							}
+							
+						}
+					}else if(cs[0].equals("mkdir") && cs.length == 2){
+						Path newD = Paths.get("files\\"+pos+cs[1]);
+						if(Files.exists(newD)){
+							send = "\""+cs[1]+"\" already created\n";
+						}else {
+							send = "\""+cs[1]+"\" created.\n";
+							Files.createDirectories(newD);
+						}
+						
+						
+					}else if(cs[0].equals("help") && cs.length == 1){
+						send = "cd <dest> - open the directory \n"+
+								"rm <file> - remove the file \n"+
+								"mkdir <file> - remove the file \n"+
+								"ls - show all files \n"+
+								"pwd -  print the path to the directory \n";
 					}else {
-						send = msg+" is not valid commmand\n";
+						send = msg+" is not valid command\nTo show all commands write \"help\"";
 					}
 					
 					output.writeUTF(send);
@@ -144,6 +183,7 @@ public class server extends Application {
 				Platform.runLater(() -> {
 					log.appendText("Client("+socket.getInetAddress()+") connection lost\n");
 				});
+				e.printStackTrace();
 			}
 		}
 		
