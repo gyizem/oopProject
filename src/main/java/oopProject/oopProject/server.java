@@ -2,6 +2,8 @@ package oopProject.oopProject;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -172,6 +174,18 @@ public class server extends Application {
 								"mkdir <file> - remove the file \n"+
 								"ls - show all files \n"+
 								"pwd -  print the path to the directory \n";
+					}else if(cs[0].equals("write") && cs.length == 2){
+						try {
+							byte b[] = new byte[input.readInt()];
+							input.read(b);
+							FileOutputStream f =new FileOutputStream(new File("files"+pos+cs[1]));
+							f.write(b);
+							f.flush();
+							f.close();
+							send = "File uploaded\n";
+						}catch(Exception e) {
+							send = "Error happend\n";
+						}
 					}else {
 						send = msg+" is not valid command\nTo show all commands write \"help\"";
 					}

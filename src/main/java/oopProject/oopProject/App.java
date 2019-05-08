@@ -2,10 +2,13 @@ package oopProject.oopProject;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -73,16 +76,32 @@ public class App  extends Application {
 		@Override
 		public void handle(ActionEvent e) {
 			try {
-				output.writeUTF(msg.getText());
-				output.flush();
 				
+				String buf[] = msg.getText().split(" ");
+				
+				if(buf[0].equals("write")) {
+					FileInputStream f = new FileInputStream(new File(buf[1]));
+					ArrayList<Byte> list = new ArrayList<Byte>();
+					int size = f.available();
+					byte b[] = new byte[f.available()];
+					f.read(b);
+					
+					output.writeUTF("write "+buf[2]);
+					output.writeInt(size);
+					output.write(b);
+					output.flush();
+				}else if(buf[0].equals("read")) {
+					
+				}else {
+					output.writeUTF(msg.getText());
+					output.flush();
+				}
 				log.setText("");
-				
 				res = input.readUTF();
-				
 				Platform.runLater(()->{
 					log.appendText(res);
 				});
+				
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
