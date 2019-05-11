@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -80,18 +81,54 @@ public class App  extends Application {
 				String buf[] = msg.getText().split(" ");
 				
 				if(buf[0].equals("write")) {
-					FileInputStream f = new FileInputStream(new File(buf[1]));
-					ArrayList<Byte> list = new ArrayList<Byte>();
-					int size = f.available();
-					byte b[] = new byte[f.available()];
-					f.read(b);
-					
-					output.writeUTF("write "+buf[2]);
-					output.writeInt(size);
-					output.write(b);
-					output.flush();
+					if(buf.length == 3) {
+						FileInputStream f = new FileInputStream(new File(buf[1]));
+						System.out.println("yollanan boyut "+f.available());
+						int size = f.available();
+						byte b[] = new byte[f.available()];
+						f.read(b);
+						f.close();
+						
+						output.writeUTF("write "+buf[2]);
+						output.writeInt(size);
+						output.write(b);
+						output.flush();
+					}else {
+						Platform.runLater(()->{
+							log.appendText("Command used wrong");
+						});
+					}
 				}else if(buf[0].equals("read")) {
-					
+					if(buf.length == 3) {
+						output.writeUTF("read "+buf[1]);
+						output.flush();
+						
+						int totalSize = input.readInt();
+						int readed = 0;
+						FileOutputStream f =new FileOutputStream(new File(buf[2]));
+						while(readed < totalSize) {
+							while(input.available()==0);
+							
+							byte b[];
+							if(input.available()+readed <= totalSize) {
+								b = new byte[input.available()];
+								readed += input.available();
+							}else{
+								b = new byte[totalSize-readed];
+								readed += totalSize-readed;
+							}
+							System.out.println("alınan boyut "+b.length+" toplam alınan "+readed+"/"+totalSize);
+							input.read(b);
+							f.write(b);
+						}
+						f.flush();
+						f.close();
+						
+					}else {
+						Platform.runLater(()->{
+							log.appendText("Command used wrong");
+						});
+					}
 				}else {
 					output.writeUTF(msg.getText());
 					output.flush();

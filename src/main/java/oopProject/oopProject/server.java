@@ -3,6 +3,7 @@ package oopProject.oopProject;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -176,13 +177,36 @@ public class server extends Application {
 								"pwd -  print the path to the directory \n";
 					}else if(cs[0].equals("write") && cs.length == 2){
 						try {
-							byte b[] = new byte[input.readInt()];
-							input.read(b);
+							int totalSize = input.readInt();
+							int readed = 0;
 							FileOutputStream f =new FileOutputStream(new File("files"+pos+cs[1]));
-							f.write(b);
+							while(readed < totalSize) {
+								while(input.available()==0);
+								readed += input.available();
+								byte b[] = new byte[input.available()];
+								System.out.println("alınan boyut "+input.available()+" toplam alınan "+readed+"/"+totalSize);
+								input.read(b);
+								f.write(b);
+							}
 							f.flush();
 							f.close();
 							send = "File uploaded\n";
+						}catch(Exception e) {
+							send = "Error happend\n";
+						}
+					}else if(cs[0].equals("read") && cs.length == 2){
+						try {
+							FileInputStream f = new FileInputStream("files"+pos+new File(cs[1]));
+							System.out.println("yollanan boyut "+f.available());
+							int size = f.available();
+							byte b[] = new byte[f.available()];
+							f.read(b);
+							f.close();
+							
+							output.writeInt(size);
+							output.write(b);
+							output.flush();
+							send = "File downloaded\n";
 						}catch(Exception e) {
 							send = "Error happend\n";
 						}
@@ -197,7 +221,6 @@ public class server extends Application {
 				Platform.runLater(() -> {
 					log.appendText("Client("+socket.getInetAddress()+") connection lost\n");
 				});
-				e.printStackTrace();
 			}
 		}
 		
