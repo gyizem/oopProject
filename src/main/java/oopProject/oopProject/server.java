@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.LinkedList;
 import java.util.stream.Stream;
 
 import javafx.application.Application;
@@ -30,8 +31,8 @@ public class server extends Application {
 	private static Thread clientAccept;
 	public static void main(String[] args) {
 		launch(args);
-		
 	}
+	
 
 	@Override
 	public void start(Stage stage) throws Exception {
@@ -147,11 +148,11 @@ public class server extends Application {
 					}else if(cs[0].equals("rm") && cs.length == 2){
 						Path rmD = Paths.get("files\\"+pos+cs[1]);
 						if(!Files.exists(rmD)){
-							send = "\""+cs[1]+"\" is not exists.\n";
+							send = "\""+pos+cs[1]+"\" is not exists.\n";
 						}else {
 							try {
 								Files.delete(rmD);
-								send = "\""+cs[1]+"\" removed.\n";
+								send = "\""+pos+cs[1]+"\" removed.\n";
 							}catch(DirectoryNotEmptyException e) {
 								send = "Removing failed, directory is not empty";
 							}catch(Exception e) {
@@ -162,9 +163,9 @@ public class server extends Application {
 					}else if(cs[0].equals("mkdir") && cs.length == 2){
 						Path newD = Paths.get("files\\"+pos+cs[1]);
 						if(Files.exists(newD)){
-							send = "\""+cs[1]+"\" already created\n";
+							send = "\""+pos+cs[1]+"\" already created\n";
 						}else {
-							send = "\""+cs[1]+"\" created.\n";
+							send = "\""+pos+cs[1]+"\" created.\n";
 							Files.createDirectories(newD);
 						}
 						
@@ -177,39 +178,57 @@ public class server extends Application {
 								"pwd -  print the path to the directory \n";
 					}else if(cs[0].equals("write") && cs.length == 2){
 						try {
-							int totalSize = input.readInt();
-							int readed = 0;
-							FileOutputStream f =new FileOutputStream(new File("files"+pos+cs[1]));
-							while(readed < totalSize) {
-								while(input.available()==0);
-								readed += input.available();
-								byte b[] = new byte[input.available()];
-								System.out.println("alınan boyut "+input.available()+" toplam alınan "+readed+"/"+totalSize);
-								input.read(b);
-								f.write(b);
+							String res = input.readUTF();
+							
+							if(res.equals("File found")) {
+								int totalSize = input.readInt();
+								int readed = 0;
+								FileOutputStream f =new FileOutputStream(new File("files"+pos+cs[1]));
+								while(readed < totalSize) {
+									while(input.available()==0);
+									readed += input.available();
+									byte b[] = new byte[input.available()];
+									System.out.println("alınan boyut "+input.available()+" toplam alınan "+readed+"/"+totalSize);
+									input.read(b);
+									f.write(b);
+								}
+								f.flush();
+								f.close();
+								send = "File uploaded\n";
+							}else {
+								send = "File not found\n";
 							}
-							f.flush();
-							f.close();
-							send = "File uploaded\n";
 						}catch(Exception e) {
 							send = "Error happend\n";
 						}
 					}else if(cs[0].equals("read") && cs.length == 2){
 						try {
-							FileInputStream f = new FileInputStream("files"+pos+new File(cs[1]));
-							System.out.println("yollanan boyut "+f.available());
-							int size = f.available();
-							byte b[] = new byte[f.available()];
-							f.read(b);
-							f.close();
+							Path find = Paths.get("files\\"+pos+cs[1]);
+							if(Files.exists(find)){
+								output.writeUTF("File found");
+								output.flush();
+								FileInputStream f = new FileInputStream("files"+pos+new File(cs[1]));
+								System.out.println("yollanan boyut "+f.available());
+								int size = f.available();
+								byte b[] = new byte[f.available()];
+								f.read(b);
+								f.close();
+								
+								output.writeInt(size);
+								output.write(b);
+								output.flush();
+								send = "File downloaded\n";
+							}else {
+								output.writeUTF("File not found");
+								output.flush();
+								send = "File not found\n";
+							}
 							
-							output.writeInt(size);
-							output.write(b);
-							output.flush();
-							send = "File downloaded\n";
 						}catch(Exception e) {
 							send = "Error happend\n";
 						}
+					}else if(msg.equals("File not found")){
+						send = "File not found";
 					}else {
 						send = msg+" is not valid command\nTo show all commands write \"help\"";
 					}

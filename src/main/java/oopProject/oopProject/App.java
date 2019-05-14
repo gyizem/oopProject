@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import javafx.application.Application;
@@ -82,17 +85,23 @@ public class App  extends Application {
 				
 				if(buf[0].equals("write")) {
 					if(buf.length == 3) {
-						FileInputStream f = new FileInputStream(new File(buf[1]));
-						System.out.println("yollanan boyut "+f.available());
-						int size = f.available();
-						byte b[] = new byte[f.available()];
-						f.read(b);
-						f.close();
-						
-						output.writeUTF("write "+buf[2]);
-						output.writeInt(size);
-						output.write(b);
-						output.flush();
+						Path find = Paths.get(buf[1]);
+						if(Files.exists(find)){
+							FileInputStream f = new FileInputStream(new File(buf[1]));
+							System.out.println("yollanan boyut "+f.available());
+							int size = f.available();
+							byte b[] = new byte[f.available()];
+							f.read(b);
+							f.close();
+							
+							output.writeUTF("write "+buf[2]);
+							output.writeInt(size);
+							output.write(b);
+							output.flush();
+						}else {
+							output.writeUTF("File not found");
+							output.flush();
+						}
 					}else {
 						Platform.runLater(()->{
 							log.appendText("Command used wrong");
@@ -103,27 +112,30 @@ public class App  extends Application {
 						output.writeUTF("read "+buf[1]);
 						output.flush();
 						
-						int totalSize = input.readInt();
-						int readed = 0;
-						FileOutputStream f =new FileOutputStream(new File(buf[2]));
-						while(readed < totalSize) {
-							while(input.available()==0);
-							
-							byte b[];
-							if(input.available()+readed <= totalSize) {
-								b = new byte[input.available()];
-								readed += input.available();
-							}else{
-								b = new byte[totalSize-readed];
-								readed += totalSize-readed;
-							}
-							System.out.println("alınan boyut "+b.length+" toplam alınan "+readed+"/"+totalSize);
-							input.read(b);
-							f.write(b);
-						}
-						f.flush();
-						f.close();
+						String res = input.readUTF();
 						
+						if(res.equals("File found")) {
+							int totalSize = input.readInt();
+							int readed = 0;
+							FileOutputStream f =new FileOutputStream(new File(buf[2]));
+							while(readed < totalSize) {
+								while(input.available()==0);
+								
+								byte b[];
+								if(input.available()+readed <= totalSize) {
+									b = new byte[input.available()];
+									readed += input.available();
+								}else{
+									b = new byte[totalSize-readed];
+									readed += totalSize-readed;
+								}
+								System.out.println("alınan boyut "+b.length+" toplam alınan "+readed+"/"+totalSize);
+								input.read(b);
+								f.write(b);
+							}
+							f.flush();
+							f.close();
+						}
 					}else {
 						Platform.runLater(()->{
 							log.appendText("Command used wrong");
