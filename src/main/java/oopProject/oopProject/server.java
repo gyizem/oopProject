@@ -175,29 +175,25 @@ public class server extends Application {
 								"rm <file> - remove the file \n"+
 								"mkdir <file> - remove the file \n"+
 								"ls - show all files \n"+
-								"pwd -  print the path to the directory \n";
+								"pwd -  print the path to the directory \n"+
+								"read <source> <dest> -  download \n"+
+								"write <source> <dest> -  upload \n";
 					}else if(cs[0].equals("write") && cs.length == 2){
 						try {
-							String res = input.readUTF();
-							
-							if(res.equals("File found")) {
-								int totalSize = input.readInt();
-								int readed = 0;
-								FileOutputStream f =new FileOutputStream(new File("files"+pos+cs[1]));
-								while(readed < totalSize) {
-									while(input.available()==0);
-									readed += input.available();
-									byte b[] = new byte[input.available()];
-									System.out.println("alınan boyut "+input.available()+" toplam alınan "+readed+"/"+totalSize);
-									input.read(b);
-									f.write(b);
-								}
-								f.flush();
-								f.close();
-								send = "File uploaded\n";
-							}else {
-								send = "File not found\n";
+							int totalSize = input.readInt();
+							int readed = 0;
+							FileOutputStream f =new FileOutputStream(new File("files"+pos+cs[1]));
+							while(readed < totalSize) {
+								while(input.available()==0);
+								readed += input.available();
+								byte b[] = new byte[input.available()];
+								System.out.println("alınan boyut "+input.available()+" toplam alınan "+readed+"/"+totalSize);
+								input.read(b);
+								f.write(b);
 							}
+							f.flush();
+							f.close();
+							send = "File uploaded\n";
 						}catch(Exception e) {
 							send = "Error happend\n";
 						}
